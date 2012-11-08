@@ -5,7 +5,7 @@ public interface HashTable<T> {
   public boolean remove(int key);
   public boolean contains(int key);
 }
-
+//change here
 class SerialHashTable<T> implements HashTable<T> {
   private SerialList<T,Integer>[] table;
   private int logSize;
