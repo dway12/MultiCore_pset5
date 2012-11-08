@@ -78,44 +78,11 @@ class FIFOReadWriteLock implements ReadWriteLock {
     }
     public void unlock() {
       writer =false;
+      System.out.println("hi");
       condition.signalAll();
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
