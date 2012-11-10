@@ -1,8 +1,9 @@
 import java.util.*;
 import java.util.concurrent.locks.*;
+import java.util.concurrent.locks.ReentrantLock.*;
 
 class LockingHashTable<T> implements HashTable<T> {
-  final FIFOReadWriteLock[] locks; 
+  final ReentrantReadWriteLock[] locks; 
   private SerialList<T,Integer>[] table;
   private int logSize;
   private int mask;
@@ -14,10 +15,10 @@ class LockingHashTable<T> implements HashTable<T> {
     this.mask = (1 << logSize) -1;
     this.maxBucketSize = maxBucketSize;
     this.table = new SerialList[1 << logSize];
-    locks = new FIFOReadWriteLock[numThreads];
+    locks = new ReentrantReadWriteLock[numThreads];
     
     for (int j=0; j<locks.length; j++) {
-      locks[j] = new FIFOReadWriteLock();
+      locks[j] = new ReentrantReadWriteLock();
     }
     
   }
@@ -55,10 +56,13 @@ class LockingHashTable<T> implements HashTable<T> {
     resizeIfNecessary(key); 
     acquireWrite(key);
     int myBucket = key & mask;
-    if ( table[myBucket] == null)
+    if ( table[myBucket] == null) {
+      //System.out.println("null");
       table[myBucket] = new SerialList<T,Integer>(key,x);
-    else 
+    } else {
       table[myBucket].add(key,x);
+      //System.out.println("not null");
+    }
  
     releaseWrite(key);
   }
@@ -74,7 +78,7 @@ class LockingHashTable<T> implements HashTable<T> {
     return result;
   }
   public void resize() {
-    for (FIFOReadWriteLock lock: locks) {
+    for (ReentrantReadWriteLock lock: locks) {
       lock.writeLock().lock();
     }
     SerialList<T,Integer>[] newTable = new SerialList[2*table.length];
@@ -93,7 +97,7 @@ class LockingHashTable<T> implements HashTable<T> {
     table = newTable;
     logSize++;
     mask = (1 << logSize) - 1;
-    for (FIFOReadWriteLock lock: locks) {
+    for (ReentrantReadWriteLock lock: locks) {
       lock.writeLock().unlock();
     }
   }

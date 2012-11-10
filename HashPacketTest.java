@@ -1,3 +1,4 @@
+import java.util.*;
 
 class SerialHashPacket {
   public static void main(String[] args) {
@@ -54,32 +55,93 @@ class ParallelHashPacket {
     final long mean = Long.parseLong(args[5]);
     final int initSize = Integer.parseInt(args[6]);
     final int numWorkers = Integer.parseInt(args[7]); 
+    final int hash_map_type = Integer.parseInt(args[8]);
 
     StopWatch timer = new StopWatch();
+ 
     //
     // allocate and initialize Lamport queues and hash table
     //
+ 
+    HashTable<Packet> hashTable = null;
+    switch (hash_map_type){
+      case 0:
+        hashTable = new LockingHashTable<Packet>(1, numWorkers,
+                                                 maxBucketSize);
+        break;
+      case 1:
+        // put hashmap type here
+        hashTable = null;
+        break;
+      case 2:
+        hashTable = null;
+        break;
+      case 3: 
+        hashTable = null;
+        break;
+      case 4:
+        hashTable = null;
+        break;
+      case 5:
+        hashTable = null;
+        break;
+    } 
+    List<LamportQ> q_bank = new ArrayList<LamportQ>(numWorkers);
+    for (int x = 0; x< numWorkers; x++){
+      LamportQ temp_q = new LamportQ(8);
+      q_bank.add(temp_q);
+    }   
+    
     HashPacketGenerator source = new HashPacketGenerator(fractionAdd,fractionRemove,hitRate,mean);
     // 
     // initialize your hash table w/ initSize number of add() calls using
     // source.getAddPacket();
     //
+    
+
     // allocate and initialize locks and any signals used to marshal threads (eg. done signals)
     // 
+    List<ParallelHashPacketWorker> w_bank = new ArrayList<ParallelHashPacketWorker>
+                                                (numWorkers);
+    for (int x=0; x<numWorkers; x++) {
+      PaddedPrimitive<Boolean> temp_done = new PaddedPrimitive(false);
+      ParallelHashPacketWorker temp_worker = new ParallelHashPacketWorker(temp_done,
+                                                       q_bank.get(x),
+                                                       hashTable);
+      w_bank.add(temp_worker);
+      //
+      // call .start() on your Workers
+      //
+      temp_worker.start();
+      //System.out.println("starting");
+    }
+    PaddedPrimitive<Boolean> done_dis = new PaddedPrimitive(false);
+    Dispatcher dispatcher = new Dispatcher(done_dis,numWorkers,
+                                           source,q_bank); 
+    for( int i = 0; i < initSize; i++ ) {
+      HashPacket<Packet> pkt = source.getAddPacket();
+      //System.out.println("adding");
+      hashTable.add(pkt.mangleKey(), pkt.getItem());
+    }
     // allocate and inialize Dispatcher and Worker threads
-    //
-    // call .start() on your Workers
-    //
+    
     timer.startTimer();
     //
     // call .start() on your Dispatcher
     //
+    dispatcher.start();
     try {
       Thread.sleep(numMilliseconds);
     } catch (InterruptedException ignore) {;}
     //
     // assert signals to stop Dispatcher
     // 
+    dispatcher.done.value = true;
+    try {
+      dispatcher.join();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
     // call .join() on Dispatcher
     //
     // assert signals to stop Workers - they are responsible for leaving
@@ -87,7 +149,22 @@ class ParallelHashPacket {
     //
     // call .join() for each Worker
     //
+    int numPackets = 0;
+    for (int x = 0; x < numWorkers; x++ ) {
+      ParallelHashPacketWorker temp_worker = w_bank.get(x);
+      temp_worker.done.value = true;
+      numPackets += temp_worker.totalPackets;
+      try {
+        temp_worker.join();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
     timer.stopTimer();
+    System.out.println("count: " + numPackets);
+    System.out.println("time: " + timer.getElapsedTime());
+    System.out.println(numPackets/timer.getElapsedTime() + " pkts / ms");
+
     // report the total number of packets processed and total time
   }
 }

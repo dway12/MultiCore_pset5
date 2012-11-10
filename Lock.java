@@ -1,5 +1,6 @@
 import java.util.*;
 import java.util.concurrent.locks.*;
+import java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject;
 
 interface ReadWriteLock {
   Lock readLock();
@@ -70,6 +71,7 @@ class FIFOReadWriteLock implements ReadWriteLock {
         while (readAcquires != readReleases) {
           condition.await();
         }
+       // System.out.println("after awaiting");
       } catch (InterruptedException e) {
         e.printStackTrace(); 
       } finally {
@@ -78,8 +80,11 @@ class FIFOReadWriteLock implements ReadWriteLock {
     }
     public void unlock() {
       writer =false;
-      System.out.println("hi");
-      condition.signalAll();
+      try {
+        condition.signalAll();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
   }
 }
