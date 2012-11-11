@@ -74,7 +74,7 @@ class ParallelHashPacket {
         hashTable = null;
         break;
       case 2:
-        hashTable = null;
+        hashTable = new LockFreeHashTable<Packet>(1,maxBucketSize);
         break;
       case 3: 
         hashTable = null;

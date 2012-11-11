@@ -1,7 +1,7 @@
 import java.util.concurrent.atomic.*;
 
 public interface HashTable<T> {
-  public void add(int key, T x);
+  public boolean add(int key, T x);
   public boolean remove(int key);
   public boolean contains(int key);
 }
@@ -23,16 +23,17 @@ class SerialHashTable<T> implements HashTable<T> {
           && table[key & mask].getSize() >= maxBucketSize )
       resize();
   }
-  private void addNoCheck(int key, T x) {
+  private boolean addNoCheck(int key, T x) {
     int index = key & mask;
     if( table[index] == null )
       table[index] = new SerialList<T,Integer>(key,x);
     else
       table[index].addNoCheck(key,x);
+    return true;
   }
-  public void add(int key, T x) {
+  public boolean add(int key, T x) {
     resizeIfNecessary(key);
-    addNoCheck(key,x);
+    return addNoCheck(key,x);
   }
   public boolean remove(int key) {
     resizeIfNecessary(key);

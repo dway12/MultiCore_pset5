@@ -52,7 +52,7 @@ class LockingHashTable<T> implements HashTable<T> {
     }
   }
 
-  public void add(int key, T x) {
+  public boolean add(int key, T x) {
     resizeIfNecessary(key); 
     acquireWrite(key);
     int myBucket = key & mask;
@@ -65,6 +65,7 @@ class LockingHashTable<T> implements HashTable<T> {
     }
  
     releaseWrite(key);
+    return true;
   }
   public boolean remove(int key) {
     resizeIfNecessary(key);
