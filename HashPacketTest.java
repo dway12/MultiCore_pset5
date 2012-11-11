@@ -71,10 +71,10 @@ class ParallelHashPacket {
         break;
       case 1:
         // put hashmap type here
-        hashTable = null;
+        hashTable = new LockFreeHashTable<Packet>(1, numWorkers, maxBucketSize);
         break;
       case 2:
-        hashTable = new LockFreeHashTable<Packet>(1,maxBucketSize);
+        hashTable = new AwesomeHashTable<Packet>(1,maxBucketSize);
         break;
       case 3: 
         hashTable = null;
