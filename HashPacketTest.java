@@ -62,7 +62,7 @@ class ParallelHashPacket {
     //
     // allocate and initialize Lamport queues and hash table
     //
- 
+
     HashTable<Packet> hashTable = null;
     switch (hash_map_type){
       case 0:
@@ -77,10 +77,11 @@ class ParallelHashPacket {
         hashTable = new AwesomeHashTable<Packet>(1,maxBucketSize);
         break;
       case 3: 
-        hashTable = null;
+        hashTable = new OptimisticHashTable<Packet>(1, numWorkers,
+                                                 maxBucketSize);
         break;
       case 4:
-        hashTable = null;
+        hashTable = new LinearHashTable<Packet>(1, numWorkers);
         break;
       case 5:
         hashTable = null;
